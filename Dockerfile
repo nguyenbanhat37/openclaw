@@ -1,7 +1,13 @@
+# Giai đoạn 1: Builder để cài đặt openclaw từ npm
+FROM node:22 AS builder
+RUN apt-get update && apt-get install -y python3 make g++ curl && rm -rf /var/lib/apt/lists/*
+RUN npm install -g openclaw@beta --unsafe-perm
+
+# Giai đoạn 2: Runtime
 FROM node:22-slim
 WORKDIR /app
 
-# Cài đặt các thư viện tối thiểu cần thiết cho ttyd chạy ổn định
+# Cài đặt công cụ và tải ttyd trực tiếp
 RUN apt-get update && apt-get install -y \
     curl \
     procps \
@@ -9,12 +15,13 @@ RUN apt-get update && apt-get install -y \
     && chmod +x /usr/local/bin/ttyd \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy OpenClaw vào nhưng CHƯA CHẠY nó để tránh làm sập container
-COPY --from=ghcr.io/openclaw/openclaw:beta /usr/local/lib/node_modules/openclaw /usr/local/lib/node_modules/openclaw
+# Copy từ builder nội bộ (Thay vì copy từ ghcr.io)
+COPY --from=builder /usr/local/lib/node_modules/openclaw /usr/local/lib/node_modules/openclaw
 
+# Thiết lập Port cho ttyd
 ENV PORT=7681
 EXPOSE 7681
 
-# Chạy duy nhất ttyd ở chế độ đơn giản nhất
-# Lệnh này sẽ giúp container luôn sống và log thường sẽ chuyển sang xanh
-CMD ["ttyd", "-p", "7681", "-i", "0.0.0.0", "bash"]
+# Lệnh khởi chạy chỉ ttyd để kiểm tra log
+# Thêm -W để ttyd có quyền ghi, giúp tránh một số lỗi đẩy ra stderr (vạch đỏ)
+CMD ["ttyd", "-p", "7681", "-W", "bash"]
