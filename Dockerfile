@@ -30,19 +30,18 @@ RUN sed -i 's/requireSetup: true/requireSetup: false/g' dist/server/config/defau
 FROM node:22-slim
 WORKDIR /app
 
-# 1. Copy toàn bộ package từ builder
 COPY --from=builder /usr/local/lib/node_modules/openclaw /usr/local/lib/node_modules/openclaw
 
-# 2. Thiết lập biến môi trường
+# Biến môi trường quan trọng
 ENV OPENCLAW_AUTH_MODE=password \
     OPENCLAW_PASSWORD=admin123456 \
     OPENCLAW_DISABLE_PAIRING=true \
     PORT=18789 \
-    HOST=0.0.0.0 \
-    NODE_ENV=production
+    HOST=0.0.0.0
 
 EXPOSE 18789
 
-# 3. Lệnh khởi chạy trực tiếp vào "nhân" của server
-# Trong bản Beta 2026, file chính thường nằm ở dist/server/main.js hoặc dist/server/index.js
-CMD ["node", "/usr/local/lib/node_modules/openclaw/dist/server/index.js", "gateway", "run", "--auth", "password", "--password", "admin123456", "--bind", "0.0.0.0", "--allow-unconfigured"]
+# Lệnh khởi chạy: Tự động tìm file chạy chính trong dist/server
+# Thường là index.js hoặc gateway.js hoặc main.js
+CMD ["sh", "-c", "node $(find /usr/local/lib/node_modules/openclaw/dist/server -name '*.js' | head -n 1) gateway run --auth password --password admin123456 --bind 0.0.0.0 --allow-unconfigured"]
+
