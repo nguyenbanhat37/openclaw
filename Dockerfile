@@ -32,16 +32,16 @@ WORKDIR /app
 
 COPY --from=builder /usr/local/lib/node_modules/openclaw /usr/local/lib/node_modules/openclaw
 
-# Biến môi trường quan trọng
+# Thiết lập biến môi trường chuẩn cho Railway
 ENV OPENCLAW_AUTH_MODE=password \
     OPENCLAW_PASSWORD=admin123456 \
     OPENCLAW_DISABLE_PAIRING=true \
     PORT=18789 \
-    HOST=0.0.0.0
+    HOST=0.0.0.0 \
+    NODE_ENV=production
 
 EXPOSE 18789
 
-# Lệnh khởi chạy: Tự động tìm file chạy chính trong dist/server
-# Thường là index.js hoặc gateway.js hoặc main.js
-CMD ["sh", "-c", "node $(find /usr/local/lib/node_modules/openclaw/dist/server -name '*.js' | head -n 1) gateway run --auth password --password admin123456 --bind 0.0.0.0 --allow-unconfigured"]
+# Lệnh khởi chạy "bất tử": Tự tìm file chạy bất kể bản Beta thay đổi cấu trúc thế nào
+CMD ["sh", "-c", "node $(find /usr/local/lib/node_modules/openclaw -name 'index.js' | grep 'server' | head -n 1) gateway run --auth password --password admin123456 --bind 0.0.0.0 --allow-unconfigured"]
 
