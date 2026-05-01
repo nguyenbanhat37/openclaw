@@ -1,30 +1,14 @@
-FROM node:22-slim
+# ... (Phần cài đặt ở trên giữ nguyên)
 
-# 1. Cài đặt các thư viện hệ thống cần thiết cho các module node (như sharp, sqlite)
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
-    curl \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+# Ví dụ: Can thiệp sâu vào code sau khi cài xong
+RUN cd /usr/local/lib/node_modules/openclaw && \
+    # 1. Đổi tên ứng dụng trong toàn bộ file client
+    grep -rl "OpenClaw" dist/client | xargs sed -i 's/OpenClaw/MyPrivateAI/g' && \
+    # 2. Tắt thông báo cập nhật gây phiền nhiễu
+    sed -i 's/checkUpdates: true/checkUpdates: false/g' dist/server/config.js
 
-# 2. Cài đặt trực tiếp OpenClaw qua npm
-# Sử dụng --unsafe-perm để tránh lỗi phân quyền khi cài global trong Docker
-RUN npm install -g openclaw@stable --unsafe-perm
+# Thiết lập thư mục lưu trữ dữ liệu bền vững
+VOLUME /root/.openclaw
 
-# 3. Thiết lập môi trường làm việc
-WORKDIR /root/.openclaw
-
-# Các biến môi trường "quyền lực" để bypass Pairing
-ENV OPENCLAW_AUTH_MODE=password
-ENV OPENCLAW_PASSWORD=admin123456
-ENV OPENCLAW_DISABLE_PAIRING=true
-ENV HOST=0.0.0.0
-ENV PORT=18789
-
-# Mở cổng
-EXPOSE 18789
-
-# 4. Khởi chạy với cấu hình ép buộc
-CMD ["openclaw", "gateway", "run", "--auth", "password", "--password", "admin123456", "--bind", "0.0.0.0"]
+# Lệnh chạy với cờ debug để bạn soi lỗi sâu hơn
+CMD ["openclaw", "gateway", "run", "--auth", "password", "--bind", "0.0.0.0", "--loglevel", "debug"]
