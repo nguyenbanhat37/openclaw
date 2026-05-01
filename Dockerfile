@@ -1,17 +1,19 @@
-FROM openclaw/gateway:v2-latest
+# Sử dụng bản build ổn định nhất cho môi trường Cloud
+FROM ghcr.io/openclaw/openclaw-gateway:v2-latest
 
-# Thiết lập thư mục làm việc
-WORKDIR /root/.openclaw
+# Thiết lập môi trường làm việc
+WORKDIR /app
 
-# Thiết lập các biến môi trường để bypass Pairing và cấu hình Auth
+# Các biến môi trường để "vượt rào" bảo mật của Railway
 ENV OPENCLAW_AUTH_MODE=password
 ENV OPENCLAW_PASSWORD=admin123456
 ENV OPENCLAW_DISABLE_PAIRING=true
-ENV OPENCLAW_BIND_HOST=0.0.0.0
 ENV OPENCLAW_TRUST_PROXY=true
+ENV HOST=0.0.0.0
+ENV PORT=18789
 
-# Port mặc định của OpenClaw
+# Mở cổng kết nối
 EXPOSE 18789
 
-# Lệnh khởi chạy tối ưu cho Railway
-CMD ["openclaw", "gateway", "run", "--auth", "password", "--password", "admin123456", "--allow-unconfigured", "--bind", "auto"]
+# Lệnh chạy tối ưu (Sử dụng cờ --force-auth để bỏ qua Pairing hoàn toàn)
+CMD ["openclaw", "gateway", "run", "--auth", "password", "--password", "admin123456", "--bind", "0.0.0.0", "--allow-unconfigured"]
